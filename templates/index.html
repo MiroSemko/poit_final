@@ -1,0 +1,270 @@
+<!DOCTYPE HTML>
+<html>
+ <head>
+  <title>Flask-SocketIO Test</title>
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.5/socket.io.min.js"></script>
+   <script src="static/libs/plotly-latest.min.js"></script>
+   <script src="static/libs/gauge.min.js"></script>
+   <script type="text/javascript" charset="utf-8">
+
+     $(document).ready(function() {
+       
+       function scrollToBottom(){
+            var logBox = $('#log');
+            var lastChild = logBox.children().last();
+            lastChild[0].scrollIntoView();
+        }
+       
+       
+       var temperatureGaugeConfig = {
+        units: "°C",
+        minValue: -20,
+        maxValue: 40,
+        majorTicks: ['-20', '0', '10', '20', '30', '40'],
+        };
+
+        var humidityGaugeConfig = {
+          units: "%",
+          minValue: 0,
+          maxValue: 100,
+          majorTicks: ['0', '20', '40', '60', '80', '100'],
+        };
+        var gaugeConfig = temperatureGaugeConfig;  // Set initial gauge configuration to temperature
+
+       var gauge = new RadialGauge({
+          renderTo: 'canvasID',
+          width: 200,
+          height: 200,
+          ...gaugeConfig,  // Spread gauge configuration properties          
+          minorTicks: 5,
+          strokeTicks: true,
+          colorPlate: "#fff",
+          borderShadowWidth: 0,
+          borders: false,
+          needleType: "arrow",
+          needleWidth: 2,
+          needleCircleSize: 7,
+          needleCircleOuter: true,
+          needleCircleInner: false,
+          animationDuration: 1500,
+          animationRule: "linear"
+      });
+      gauge.value = "0";
+       
+       function updateGaugeConfig(newConfig) {
+        gaugeConfig = newConfig;
+        gauge.update(gaugeConfig);  // Update gauge with new configuration
+      }
+       
+       
+       
+      var x = new Array();
+      var y = new Array();
+      var trace;
+      var layout;
+      
+      var can_change_sensor = 1;
+      
+      namespace = '/test';
+      var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+
+      socket.on('connect', function() {
+        socket.emit('my_event', {data: 'I\'m connected!', value: 1}); });
+
+      socket.on('my_response', function(msg) {
+        console.log(msg);
+        $('#log').append('Received #'+msg.count+': '+msg.sensor_data+'<br>').html(); 
+        scrollToBottom();
+        
+        gauge.value = msg.sensor_data;  
+        
+        
+        x.push(parseFloat(msg.count));
+        y.push(parseFloat(msg.sensor_data));
+        trace = {
+            x: x,
+            y: y,
+        };       
+        layout = {
+          xaxis: {
+              title: 'x',
+          },
+          yaxis: {
+              title: 'y',
+              //range: [-1,1]
+          }
+        };
+        console.log(trace);
+        var traces = new Array();
+        traces.push(trace);
+        Plotly.newPlot($('#plotdiv')[0], traces, layout); 
+        //addTraces               
+                
+        });
+
+      $('form#emit').submit(function(event) {
+          socket.emit('my_event', {value: $('#emit_value').val()});
+          return false; });
+      $('#buttonVal').click(function(event) {
+          console.log("db event")
+          console.log($('#buttonVal').val());
+          socket.emit('db_event', {value: $('#buttonVal').val()});
+          if ($(this).val() == "start") {
+            $(this).val("stop");
+            $(this).text("Stop");
+            gauge.draw();
+            can_change_sensor = 0;
+            // Clear log and Plotly graph
+            $('#log').empty();
+            Plotly.purge($('#plotdiv')[0]);
+          // Clear x and y arrays
+          x.length = 0;
+          y.length = 0;
+          }
+          else {
+            $(this).val("start");
+            $(this).text("Start");
+            can_change_sensor = 1;
+          }
+          return false; }); 
+      //$('#buttonVal2').click(function(event) {
+          ////console.log($('#buttonVal').val());
+          //socket.emit('switch_data', {value: $('#buttonVal2').val()});
+          //if ($(this).val() == "Temperature") {
+            //$(this).val("Humidity");
+            //$(this).text("Switch to Humidity");
+            //updateGaugeConfig(temperatureGaugeConfig);
+          //}
+          //else {
+            //$(this).val("Temperature");
+            //$(this).text("Switch to Temperature");
+            //updateGaugeConfig(humidityGaugeConfig);
+          //}
+          //return false; }); 
+          
+        // Click event for temperature button
+        $('#temperatureBtn').click(function(event) {
+            if(can_change_sensor == 1){
+              socket.emit('switch_data', {value: "Temperature"});
+              $(this).addClass('active');
+              $('#humidityBtn').removeClass('active');
+              updateGaugeConfig(temperatureGaugeConfig);
+            }
+        });
+
+        // Click event for humidity button
+        $('#humidityBtn').click(function(event) {
+          
+            if(can_change_sensor == 1){
+              socket.emit('switch_data', {value: "Humidity"});
+              $(this).addClass('active');
+              $('#temperatureBtn').removeClass('active');
+              updateGaugeConfig(humidityGaugeConfig);
+            }
+        });
+    
+    
+      $('form#disconnect').submit(function(event) {
+          socket.emit('disconnect_request');
+          return false; });  
+          
+          
+      $('#initializeBtn').click(function(event) {
+        socket.emit('initialize');
+          
+        $(this).hide();
+            //$.ajax({
+                //type: 'POST',
+                //url: '/initialize',
+                //success: function(response) {
+                    //console.log(response.message);
+                    //// You can add any additional handling here if needed
+                //},
+                //error: function(error) {
+                    //console.error('Error:', error);
+                //}
+            //});
+        });
+        
+      });
+    </script>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <style>
+        /* Custom styles if needed */
+        .gauge-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #plotdiv {
+            width: 100%;
+            height: 300px;
+        }
+        canvas {
+            width: 100%;
+        }
+        
+        #left-area {
+            height: 300px; /* Set a fixed height */
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+
+        #log {
+            max-height: 100%; /* Ensure the log stays within its parent's height */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Temperature and Humidity Monitoring</h1>
+        <!-- Centered buttons -->
+      <div class="text-center">
+          <div class="mb-2">
+              <button id="initializeBtn" class="btn btn-primary">Initialize</button>
+          </div>
+          <div class="btn-group mb-2" role="group" aria-label="Temperature and Humidity">
+              <button id="temperatureBtn" class="btn btn-secondary active" type="button">Temperature</button>
+              <button id="humidityBtn" class="btn btn-secondary" type="button">Humidity</button>
+          </div>
+          
+          <div class="mb-2">
+
+                <button id="buttonVal" class="btn btn-success" type="submit" value="start">Start</button>
+
+            </div>
+          <div class="mt-3">
+              <form id="disconnect" method="POST" action="#">
+                  <input type="submit" value="Disconnect" class="btn btn-danger">
+              </form>
+          </div>
+      </div>  
+
+        
+        <div class="row mt-3">
+            <div class="col-lg-3" style="margin-top: 3rem;">
+                <!-- Left area for log -->
+                <div id="left-area">
+                    <div id="log" class="mt-3"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <!-- Middle area for plotly graph -->
+                <div id="plotdiv"></div>
+            </div>
+            <div class="col-lg-3" style="margin-top: 3rem;">
+                <!-- Right area for gauge -->
+                <div class="gauge-container">
+                    <canvas id="canvasID"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
