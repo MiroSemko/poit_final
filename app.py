@@ -32,7 +32,7 @@ thread_lock = Lock()
 data_switch = "Temperature" #or Humidity
 
 
-#ser = serial.Serial('/dev/ttyUSB0', 9600)
+ser = serial.Serial('/dev/ttyUSB0', 9600)
 
 
 
@@ -58,11 +58,11 @@ def background_thread(args):
         
         socketio.sleep(1)
         
-        #nodemcu_data = ser.readline().decode('utf-8').strip().split();
-        if(data_switch == "Temperature"):       
-            nodemcu_data = ["Temperature", "25.00"]    #simulating sensor data
-        elif(data_switch == "Humidity"):
-            nodemcu_data = ["Humidity", "57.00"]
+        nodemcu_data = ser.readline().decode('utf-8').strip().split();
+        # if(data_switch == "Temperature"):       
+            # nodemcu_data = ["Temperature", "25.00"]    #simulating sensor data
+        # elif(data_switch == "Humidity"):
+            # nodemcu_data = ["Humidity", "57.00"]
         
         if (nodemcu_data[0] == data_switch):
             sensor_data = nodemcu_data[1]
@@ -112,7 +112,7 @@ def background_thread(args):
             count = 0
         
          
-    #db.close()
+    db.close()
     
     
 
@@ -149,7 +149,7 @@ def dbdata(num):
   db = MySQLdb.connect(host=myhost,user=myuser,passwd=mypasswd,db=mydb)
   cursor = db.cursor()
   print(num)
-  cursor.execute("SELECT hodnoty FROM  final WHERE id=%s", num)
+  cursor.execute("SELECT hodnoty FROM  final WHERE id=%s", (num,))
   rv = cursor.fetchone()
   return str(rv[0])
   
