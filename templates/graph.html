@@ -10,15 +10,48 @@
     <script>
         $(document).ready(function(){
             
+            var data_source = "/dbdata/";
+            
+            $('#databaseBtn').click(function(){
+                data_source = "/dbdata/";
+                
+                $('#entries').empty(); // Clear previous entries
+                
+                $('#temperatureBtn').trigger('click');
+                
+                
+                  $(this).addClass('active');
+                  $('#fileBtn').removeClass('active');
+            });
+            $('#fileBtn').click(function(){
+                data_source = "/filedata/";
+                
+                $('#temperatureBtn').trigger('click');
+                
+                $('#entries').empty(); // Clear previous entries
+                
+                  $(this).addClass('active');
+                  $('#databaseBtn').removeClass('active');
+            });
+            
+            
             $('#temperatureBtn').click(function(){ // Listen for click event on Temperature button
                 
               $(this).addClass('active');
               $('#humidityBtn').removeClass('active');
                 $('#entries').empty(); // Clear previous entries
+                
+                
+                if(data_source === "/dbdata/"){
+                    
+                    var url_var = "/temperature_data"
+                }else{
+                    var url_var = "/temperature_data_file"
+                }
 
                 $.ajax({
                     type: "GET", // Use GET method to retrieve data
-                    url: "/temperature_data", // Endpoint to fetch temperature data
+                    url: url_var, // Endpoint to fetch temperature data
                     success: function(data) {
                         data.forEach(function(row) { // Iterate through each row
                             // Convert Unix timestamp to Date object
@@ -37,16 +70,27 @@
                         console.error("Error fetching temperature data:", error);
                     }
                 });
+                
+                
             });
+            
             $('#humidityBtn').click(function(){ // Listen for click event on Temperature button
 
               $(this).addClass('active');
               $('#temperatureBtn').removeClass('active');
                 $('#entries').empty(); // Clear previous entries
+                
+                
+                if(data_source === "/dbdata/"){
+                    
+                    var url_var = "/humidity_data"
+                }else{
+                    var url_var = "/humidity_data_file"
+                }
 
                 $.ajax({
                     type: "GET", // Use GET method to retrieve data
-                    url: "/humidity_data", // Endpoint to fetch temperature data
+                    url: url_var, // Endpoint to fetch temperature data
                     success: function(data) {
                         data.forEach(function(row) { // Iterate through each row
                             // Convert Unix timestamp to Date object
@@ -79,7 +123,7 @@
                 var rowNumber = $(this).val();
                 $.ajax({
                     type: "POST",
-                    url: "/dbdata/" + rowNumber,
+                    url: data_source + rowNumber,
                     success: function(data) {
                         data = JSON.parse(data);
                         console.log(data);
@@ -225,30 +269,22 @@
         
         
         <!-- Centered buttons -->
-      <div class="text-center">
-<!--
-          <div class="mb-2">
-              <button id="initializeBtn" class="btn btn-primary">Initialize</button>
-          </div>
--->
-          <div class="btn-group mb-2" role="group" aria-label="Temperature and Humidity">
-              <button id="temperatureBtn" class="btn btn-secondary active" type="button">Temperature</button>
-              <button id="humidityBtn" class="btn btn-secondary" type="button">Humidity</button>
-          </div>
-          
-<!--
-          <div class="mb-2">
+        <div class="text-center">
 
-                <button id="buttonVal" class="btn btn-success" type="submit" value="start">Start</button>
-
+            <!-- Database and File buttons -->
+            <div class="btn-group mb-2 d-block" role="group" aria-label="Database and File">
+                <button id="databaseBtn" class="btn btn-secondary active" type="button">Database</button>
+                <button id="fileBtn" class="btn btn-secondary" type="button">File</button>
             </div>
-          <div class="mt-3">
-              <form id="disconnect" method="POST" action="#">
-                  <input type="submit" value="Disconnect" class="btn btn-danger">
-              </form>
-          </div>
--->
-      </div>  
+
+            <!-- Temperature and Humidity buttons -->
+            <div class="btn-group mb-2 d-block" role="group" aria-label="Temperature and Humidity">
+                <button id="temperatureBtn" class="btn btn-secondary active" type="button">Temperature</button>
+                <button id="humidityBtn" class="btn btn-secondary" type="button">Humidity</button>
+            </div>
+
+        </div>
+
 
         
         <div class="row mt-3">

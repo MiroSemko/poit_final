@@ -83,7 +83,8 @@ def background_thread(args):
                 "start_time": start_time,
                 "t": time.time(),
                 "x": dataCounter,
-                "sensor_data": sensor_data
+                "sensor_data": sensor_data,
+                "data_switch": data_switch
             }
             dataList.append(dataDict)
             
@@ -151,13 +152,18 @@ def dbdata(num):
   cursor.execute("SELECT hodnoty FROM  final WHERE id=%s", num)
   rv = cursor.fetchone()
   return str(rv[0])
-  #return str(readmyfile(num))
+  
+@app.route('/filedata/<string:num>', methods=['GET', 'POST'])
+def filedata(num):
+  print(num)
+  return str(readmyfile(num))
   
   
 
 
 @app.route('/temperature_data', methods=['GET'])
 def get_temperature_data():
+    print("db")
     db = MySQLdb.connect(host=myhost, user=myuser, passwd=mypasswd, db=mydb)
     cursor = db.cursor()
     cursor.execute("SELECT * FROM final WHERE data_switch = 'Temperature'")
@@ -172,6 +178,32 @@ def get_temperature_data():
         })
     db.close()
     return jsonify(temperature_data)
+    
+@app.route('/temperature_data_file', methods=['GET'])
+def get_temperature_data_file():
+    print("file")
+
+    try:
+        with open("static/files/graph.txt", "r") as fo:
+            rows = fo.readlines()
+            temperature_data = []
+            for index, row in enumerate(rows, start=1):
+                row_data = row.strip()[1:-1].split(", ")  # Remove square brackets and split by ", "
+                start_time = float(row_data[0].split(": ")[1])
+                data_switch = row_data[-1].split(": ")[1].strip('"')
+                if data_switch == 'Temperature"}':
+                    temperature_data.append({
+                        'id': index,
+                        'start_time': start_time,
+                        'hodnoty': "",
+                        'data_switch': data_switch
+                    })
+
+        print(temperature_data)
+        return jsonify(temperature_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/humidity_data', methods=['GET'])
@@ -190,6 +222,31 @@ def get_humidity_data():
         })
     db.close()
     return jsonify(temperature_data)
+    
+@app.route('/humidity_data_file', methods=['GET'])
+def get_humidity_data_file():
+
+    try:
+        with open("static/files/graph.txt", "r") as fo:
+            rows = fo.readlines()
+            temperature_data = []
+            for index, row in enumerate(rows, start=1):
+                row_data = row.strip()[1:-1].split(", ")  # Remove square brackets and split by ", "
+                start_time = float(row_data[0].split(": ")[1])
+                data_switch = row_data[-1].split(": ")[1].strip('"')
+                if data_switch == 'Humidity"}':
+                    temperature_data.append({
+                        'id': index,
+                        'start_time': start_time,
+                        'hodnoty': "",
+                        'data_switch': data_switch
+                    })
+
+        print(temperature_data)
+        return jsonify(temperature_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
     
