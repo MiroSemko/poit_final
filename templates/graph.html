@@ -11,7 +11,9 @@
         $(document).ready(function(){
             
             $('#temperatureBtn').click(function(){ // Listen for click event on Temperature button
-
+                
+              $(this).addClass('active');
+              $('#humidityBtn').removeClass('active');
                 $('#entries').empty(); // Clear previous entries
 
                 $.ajax({
@@ -38,6 +40,8 @@
             });
             $('#humidityBtn').click(function(){ // Listen for click event on Temperature button
 
+              $(this).addClass('active');
+              $('#temperatureBtn').removeClass('active');
                 $('#entries').empty(); // Clear previous entries
 
                 $.ajax({
@@ -132,6 +136,10 @@
             });
             
             
+          $('form#disconnect').submit(function(event) {
+              socket.emit('disconnect_request');
+              localStorage.clear();
+              return false; });  
             
             $('#temperatureBtn').trigger('click');
 
@@ -167,6 +175,23 @@
         #log {
             max-height: 100%; /* Ensure the log stays within its parent's height */
         }
+        
+        
+                /* Make the navbar span the entire width */
+        .navbar {
+            width: 100%;
+            
+        }
+        
+        .navbar-header {
+            text-align: center;
+            width: 100%;
+        }
+
+        .navbar-brand {
+            display: inline-block;
+            margin-left: 11rem;
+        }
     </style>
 </head>
 <body>
@@ -174,7 +199,31 @@
     
     
     <div class="container">
-        <h1 class="text-center">Temperature and Humidity Monitoring</h1>
+        <!-- Navigation menu -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid d-flex justify-content-center align-items-center"> <!-- Add flexbox classes -->
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="/">Temperature and Humidity Monitoring</a>
+                </div>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a class="nav-link mr-3" href="/graph">Graph</a>
+                        </li>
+                        <li class="nav-item">
+                            <form id="disconnect" method="POST" action="#">
+                                <input type="submit" value="Disconnect" class="btn btn-danger nav-link">
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        
+        
         <!-- Centered buttons -->
       <div class="text-center">
 <!--
@@ -203,19 +252,21 @@
 
         
         <div class="row mt-3">
+            
             <div class="col-lg-3" style="margin-top: 3rem;">
-                <!-- Left area for log -->
-                <div id="left-area">
-                    <div id="log" class="mt-3"></div>
-                </div>
+                <input type="text" id="rowInput" placeholder="Enter row number">
+                <div id="entries"></div>
             </div>
+            
             <div class="col-lg-6">
                 <!-- Middle area for plotly graph -->
                 <div id="plotdiv"></div>
             </div>
             <div class="col-lg-3" style="margin-top: 3rem;">
-                <input type="text" id="rowInput" placeholder="Enter row number">
-                <div id="entries"></div>
+                <!-- Left area for log -->
+                <div id="left-area">
+                    <div id="log" class="mt-3"></div>
+                </div>
             </div>
         </div>
     </div>

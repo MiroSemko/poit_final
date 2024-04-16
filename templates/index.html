@@ -114,14 +114,17 @@
           if ($(this).val() == "start") {
             $(this).val("stop");
             $(this).text("Stop");
+            
+            
+            $('#canvasID').css('visibility', 'visible');
             gauge.draw();
             can_change_sensor = 0;
             // Clear log and Plotly graph
             $('#log').empty();
             Plotly.purge($('#plotdiv')[0]);
-          // Clear x and y arrays
-          x.length = 0;
-          y.length = 0;
+            // Clear x and y arrays
+            x.length = 0;
+            y.length = 0;
           }
           else {
             $(this).val("start");
@@ -168,13 +171,19 @@
     
       $('form#disconnect').submit(function(event) {
           socket.emit('disconnect_request');
+          localStorage.clear();
           return false; });  
           
           
       $('#initializeBtn').click(function(event) {
         socket.emit('initialize');
           
-        $(this).hide();
+        initialize();
+        
+        localStorage.setItem('initialized', 'true');
+                
+        // Hide temperature, humidity buttons, and start button
+                
             //$.ajax({
                 //type: 'POST',
                 //url: '/initialize',
@@ -188,6 +197,18 @@
             //});
         });
         
+        function initialize() {
+          $('#initializeBtn').hide();
+          $('#temperatureBtn, #humidityBtn, #buttonVal').show(); 
+          $('#navbarNav').css('visibility', 'visible');
+        }
+        
+        
+        var initialized = localStorage.getItem('initialized');
+        if (initialized === 'true') {
+            initialize(); // If yes, initialize the page
+        }
+
       });
     </script>
     <!-- Bootstrap CSS -->
@@ -219,11 +240,78 @@
         #log {
             max-height: 100%; /* Ensure the log stays within its parent's height */
         }
+        
+        
+        /* Make the navbar span the entire width */
+        .navbar {
+            width: 100%;
+            
+        }
+        
+        .navbar-header {
+            text-align: center;
+            width: 100%;
+        }
+
+        .navbar-brand {
+            display: inline-block;
+            margin-left: 11rem;
+        }
+        
+        #buttonVal{
+          display: none;
+        }
+
+        #humidityBtn{
+          display: none;
+        }
+        #temperatureBtn{
+          display: none;
+        }
+        
+        
+        
+        #canvasID{
+          visibility: hidden;
+        }
+        #navbarNav{
+          visibility: hidden;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">Temperature and Humidity Monitoring</h1>
+        <!-- Navigation menu -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid d-flex justify-content-center align-items-center"> <!-- Add flexbox classes -->
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="#">Temperature and Humidity Monitoring</a>
+                </div>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a class="nav-link mr-3" href="/graph">Graph</a>
+                        </li>
+                        <li class="nav-item">
+                            <form id="disconnect" method="POST" action="#">
+                                <input type="submit" value="Disconnect" class="btn btn-danger nav-link">
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+
+
+
+
+
+        
+        
         <!-- Centered buttons -->
       <div class="text-center">
           <div class="mb-2">
@@ -239,11 +327,13 @@
                 <button id="buttonVal" class="btn btn-success" type="submit" value="start">Start</button>
 
             </div>
+<!--
           <div class="mt-3">
               <form id="disconnect" method="POST" action="#">
                   <input type="submit" value="Disconnect" class="btn btn-danger">
               </form>
           </div>
+-->
       </div>  
 
         
